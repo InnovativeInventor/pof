@@ -1,0 +1,42 @@
+<!doctype html>
+<title>Proof of Freshenss</title>
+<div class=pof>
+  <h1>Prototype proof of freshness generator</h1>
+
+  {% if epoch_time %}
+    <p> Time since epoch: {{ epoch_time }} </p>
+  {% else %}
+    <p>Something catastropic went wrong when trying to get epoch_time. Please report this issue.</p>
+  {% endif %}
+
+  <h3><strong>NYT:</strong></h3>
+  {% for headlines in nyt_news_titles %}
+    <p>{{headlines}}</p>
+  {% endfor %}
+  <br>
+  <h3><strong>BBC:</strong></h3>
+  {% for headlines in bbc_news_titles %}
+    <p>{{headlines}}</p>
+  {% endfor %}
+  <br>
+  <h3><strong>WSJ:</strong></h3>
+  {% for headlines in wsj_news_titles %}
+    <p>{{headlines}}</p>
+  {% endfor %}
+  <br>
+
+  {% if unix_time and seed and output %}
+    <h3><strong>NIST Randomness Beacon:</strong></h3>
+    <p> Unix time: {{ unix_time }} </p>
+    <p> Seed: {{ seed }} </p>
+    <p> Output: {{ output }} </p>
+  {% else %}
+    <p>Something catastropic went wrong when trying to get nist_beacon. Please report this issue.</p>
+  {% endif %}
+
+  {% if pof_frequency and next_news_update and next_nist_update %}
+    <p>Visit <a href="/about">here<a> to learn more. This updates every {{ pof_frequency }}. The next news update will be in {{ next_news_update }} and the next nist beacon update will be in {{ next_nist_update }}</p>
+  {% else %}
+    <p>Something went wrong with the timing updating mechanism. Please report this issue.</p>
+  {% endif %}
+</div>

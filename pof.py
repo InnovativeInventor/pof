@@ -25,17 +25,21 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from flask import Flask
+from flask import Flask, render_template
 import feedparser
 import requests
 from flask_caching import Cache
-from datetime import datetime
+from xml.etree.ElementTree import fromstring, ElementTree
+import time
+import git
 
 app = Flask(__name__)
 
 # Configurable variables
 random_secret_key = 'ib6uYkCK3aTNp3qu7LKd5GcQZehmvWXW5n173wg2ibqDWBe23FZELZDHsN4dSzN1SynnFVe0LxzLQZq5OGSd2hf3tXs1VV8g'
 pof_frequency = 60
+
+# Global variables
 
 app.config.update(
     DEBUG=False,
@@ -49,9 +53,9 @@ cache = Cache(app, config={
 # Test if random_secret_key has been changed from the default value
 if random_secret_key == 'ib6uYkCK3aTNp3qu7LKd5GcQZehmvWXW5n173wg2ibqDWBe23FZELZDHsN4dSzN1SynnFVe0LxzLQZq5OGSd2hf3tXs1VV8g':
     print("Warning: If you are running this in production, don't forget to change the random_secret_key. This message will automatically disappear if random_secret_key is changed.")
+print("This server is configured to update every 60 seconds. Edit pof.py to change your server settings.")
 
-
-nist_beacon = feedparser.parse('https://beacon.nist.gov/rest/record/last.xml')
+nist_beacon = requests.get('https://beacon.nist.gov/rest/record/last.xml', headers={'Cache-Control': 'no-cache'})
 nyt_news = feedparser.parse('https://rss.nytimes.com/services/xml/rss/nyt/World.xml')
 bbc_news = feedparser.parse('http://feeds.bbci.co.uk/news/world/rss.xml')
 wsj_news = feedparser.parse('http://www.wsj.com/xml/rss/3_7085.xml')
@@ -61,25 +65,51 @@ bitcoin_blockchain = requests.get('https://blockchain.info/blocks/?format=json')
 @app.route('/')
 @cache.cached(timeout=720)
 def index():
-    return 'Welcome to POF (Proof of Freshness)! This website is made using Flask and the code is on GitHub. To see the POF page, visit <a href="/pof">/pof<a>.'
+    global pof_frequency
+    repo = git.Repo(search_parent_directories=True)
+    commit = repo.head.object.hexsha
+    return render_template('homepage.html', commit=commit, pof_frequency=pof_frequency)
 
 @app.route('/pof')
 def pof():
     global pof_frequency
-    time = "Time: " + str(datetime.now())
+    global news_last_checked
+    global nist_last_checked
+    epoch = int(time.time())
+    epoch_time = str(epoch)
     news_titles = all_news()
-    about = 'Visit <a href="/about">here<a> to learn more. This updates every ' + str(pof_frequency) + " seconds."
-    return time + news_titles + about
+    nist_beacon = nist()
+    next_news_update = str(pof_frequency-(epoch-news_last_checked))
+    next_nist_update = pof_frequency-(epoch-nist_last_checked)
+
+    if next_nist_update < 0:
+        next_nist_update = str(0)
+    else:
+        next_nist_update = str(next_nist_update)
+
+    return render_template(
+        'layouts.html',
+        epoch_time=epoch_time,
+        nyt_news_titles=news_titles[0],
+        bbc_news_titles=news_titles[1],
+        wsj_news_titles=news_titles[2],
+        unix_time=nist_beacon[0],
+        seed=nist_beacon[1],
+        output=nist_beacon[2],
+        pof_frequency=pof_frequency,
+        next_news_update=next_news_update,
+        next_nist_update=next_nist_update
+        )
 
 @cache.cached(timeout=pof_frequency, key_prefix='news_feeds')
 def all_news():
+    global news_last_checked
+    news_last_checked = int(time.time())
+    nyt_news_titles = news_feeds(nyt_news)
+    bbc_news_titles = news_feeds(bbc_news)
+    wsj_news_titles = news_feeds(wsj_news)
 
-    nyt_news_titles = str(undo_list(news_feeds(nyt_news)))
-    bbc_news_titles = str(undo_list(news_feeds(bbc_news)))
-    wsj_news_titles = str(undo_list(news_feeds(wsj_news)))
-
-    news_titles = "<br>NYT: <br>" + nyt_news_titles + "<br><br>BBC: <br>" + bbc_news_titles + "<br><br>WSJ: <br>" + wsj_news_titles + "<br>" + "<br>"
-    return str(news_titles)
+    return [nyt_news_titles, bbc_news_titles, wsj_news_titles]
 
 def news_feeds(feed):
     title = []
@@ -88,8 +118,18 @@ def news_feeds(feed):
             title.append(feed.entries[count].title)
     return title
 
+@cache.cached(timeout=pof_frequency, key_prefix='nist_beacon')
 def nist():
-    print(nist_beacon.feed.title)
+    global nist_last_checked
+    tree = ElementTree(fromstring(nist_beacon.content))
+    root = tree.getroot()
+
+    nist_last_checked = int(root[2].text)
+
+    unix_time = root[2].text
+    seed = root[3].text
+    output = root[6].text
+    return [unix_time, seed, output]
 
 def undo_list(input_list):
     undo_list = '<br>'.join(input_list)
