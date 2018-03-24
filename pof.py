@@ -28,16 +28,23 @@
 from flask import Flask
 import feedparser
 import requests
+from flask_caching import Cache
+from datetime import datetime
 
 app = Flask(__name__)
 
-# Only change this variable
+# Configurable variables
 random_secret_key = 'ib6uYkCK3aTNp3qu7LKd5GcQZehmvWXW5n173wg2ibqDWBe23FZELZDHsN4dSzN1SynnFVe0LxzLQZq5OGSd2hf3tXs1VV8g'
+pof_frequency = 60
 
 app.config.update(
     DEBUG=False,
     SECRET_KEY=random_secret_key
 )
+
+cache = Cache(app, config={
+    'CACHE_TYPE': 'simple'
+})
 
 # Test if random_secret_key has been changed from the default value
 if random_secret_key == 'ib6uYkCK3aTNp3qu7LKd5GcQZehmvWXW5n173wg2ibqDWBe23FZELZDHsN4dSzN1SynnFVe0LxzLQZq5OGSd2hf3tXs1VV8g':
@@ -52,20 +59,26 @@ congress_votes = requests.get('https://www.govtrack.us/data/congress/')
 bitcoin_blockchain = requests.get('https://blockchain.info/blocks/?format=json')
 
 @app.route('/')
+@cache.cached(timeout=720)
 def index():
     return 'Welcome to POF (Proof of Freshness)! This website is made using Flask and the code is on GitHub. To see the POF page, visit <a href="/pof">/pof<a>.'
 
 @app.route('/pof')
 def pof():
+    global pof_frequency
+    time = "Time: " + str(datetime.now())
     news_titles = all_news()
-    return str(news_titles)
+    about = 'Visit <a href="/about">here<a> to learn more. This updates every ' + str(pof_frequency) + " seconds."
+    return time + news_titles + about
 
+@cache.cached(timeout=pof_frequency, key_prefix='news_feeds')
 def all_news():
+
     nyt_news_titles = str(undo_list(news_feeds(nyt_news)))
     bbc_news_titles = str(undo_list(news_feeds(bbc_news)))
     wsj_news_titles = str(undo_list(news_feeds(wsj_news)))
 
-    news_titles = "<br>NYT: <br>" + nyt_news_titles + "<br><br>BBC: <br>" + bbc_news_titles + "<br><br>WSJ: <br>" + wsj_news_titles
+    news_titles = "<br>NYT: <br>" + nyt_news_titles + "<br><br>BBC: <br>" + bbc_news_titles + "<br><br>WSJ: <br>" + wsj_news_titles + "<br>" + "<br>"
     return str(news_titles)
 
 def news_feeds(feed):
