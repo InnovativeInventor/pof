@@ -34,15 +34,15 @@ import time
 import git
 from pathlib import Path
 import platform
+import secrets
 
 app = Flask(__name__)
 
-# Configurable variables
-random_secret_key = 'ib6uYkCK3aTNp3qu7LKd5GcQZehmvWXW5n173wg2ibqDWBe23FZELZDHsN4dSzN1SynnFVe0LxzLQZq5OGSd2hf3tXs1VV8g'
-pof_frequency = 60
+# Configurable variable
+pof_frequency = 60 # seconds
 
-# Global variables
 
+random_secret_key = secrets.token_urlsafe(128)
 app.config.update(
     DEBUG=False,
     SECRET_KEY=random_secret_key
@@ -60,7 +60,7 @@ Dockerfile = Path("Dockerfile")
 if Dockerfile.is_file():
     system = str(platform.dist()[0])
 else:
-    system = "Docker"
+    system = "docker"
 
 nist_beacon = requests.get('https://beacon.nist.gov/rest/record/last.xml', headers={'Cache-Control': 'no-cache'})
 nyt_news = feedparser.parse('https://rss.nytimes.com/services/xml/rss/nyt/World.xml')

@@ -1,5 +1,5 @@
 ## Proof of Freshness
-This is just to demonstrate different ways to prove freshness when making documents or files. 
+This is just to demonstrate different ways to prove freshness when making documents or files.
 
 ## Running
 ```bash
@@ -11,4 +11,6 @@ flask run
 ```bash
 docker build . -t pof_flask && docker run --name pof_flask -p 8000:8000 pof_flask
 ```
-Note that you might need to use `sudo` for Docker to work.
+
+Notes:
+- You might need to use `sudo` for Docker to work.
