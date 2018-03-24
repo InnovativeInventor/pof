@@ -14,3 +14,5 @@ docker build . -t pof_flask && docker run --name pof_flask -p 8000:8000 pof_flas
 
 Notes:
 - You might need to use `sudo` for Docker to work.
+
+Proof of freshness demo (using docker): [homelabs.space:2052/pof](http://homelabs.space:2052/pof)
