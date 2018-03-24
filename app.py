@@ -32,6 +32,8 @@ from flask_caching import Cache
 from xml.etree.ElementTree import fromstring, ElementTree
 import time
 import git
+from pathlib import Path
+import platform
 
 app = Flask(__name__)
 
@@ -54,6 +56,11 @@ cache = Cache(app, config={
 if random_secret_key == 'ib6uYkCK3aTNp3qu7LKd5GcQZehmvWXW5n173wg2ibqDWBe23FZELZDHsN4dSzN1SynnFVe0LxzLQZq5OGSd2hf3tXs1VV8g':
     print("Warning: If you are running this in production, don't forget to change the random_secret_key. This message will automatically disappear if random_secret_key is changed.")
 print("This server is configured to update every 60 seconds. Edit pof.py to change your server settings.")
+Dockerfile = Path("Dockerfile")
+if Dockerfile.is_file():
+    system = str(platform.dist()[0])
+else:
+    system = "Docker"
 
 nist_beacon = requests.get('https://beacon.nist.gov/rest/record/last.xml', headers={'Cache-Control': 'no-cache'})
 nyt_news = feedparser.parse('https://rss.nytimes.com/services/xml/rss/nyt/World.xml')
@@ -68,7 +75,7 @@ def index():
     global pof_frequency
     repo = git.Repo(search_parent_directories=True)
     commit = repo.head.object.hexsha
-    return render_template('homepage.html', commit=commit, pof_frequency=pof_frequency)
+    return render_template('homepage.html', commit=commit, system=system, pof_frequency=pof_frequency)
 
 @app.route('/pof')
 def pof():
