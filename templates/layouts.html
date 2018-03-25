@@ -43,7 +43,7 @@
 
   <br>
   {% if pof_frequency and next_news_update and next_nist_update %}
-    <p>Visit <a href="/about">here<a> to learn more. This updates every {{ pof_frequency }}. The next update of this page's data sources will be in {{ next_news_update }} and the next nist beacon update will be in {{ next_nist_update }}</p>
+    <p>Visit <a href="/">here<a> to learn more. This updates every {{ pof_frequency }}. The next news update will be in {{ next_news_update }} and the next nist beacon update will be in {{ next_nist_update }}</p>
   {% else %}
     <p>Something went wrong with the timing updating mechanism. Please report this issue.</p>
   {% endif %}
