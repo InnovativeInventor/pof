@@ -67,7 +67,7 @@ nyt_news = feedparser.parse('https://rss.nytimes.com/services/xml/rss/nyt/World.
 bbc_news = feedparser.parse('http://feeds.bbci.co.uk/news/world/rss.xml')
 wsj_news = feedparser.parse('http://www.wsj.com/xml/rss/3_7085.xml')
 congress_votes = requests.get('https://www.govtrack.us/data/congress/')
-bitcoin_blockchain = requests.get('https://blockchain.info/blocks/?format=json')
+bitcoin_blockchain = requests.get('https://blockchain.info/q/latesthash')
 
 @app.route('/')
 @cache.cached(timeout=720)
@@ -82,27 +82,27 @@ def pof():
     global pof_frequency
     global news_last_checked
     global nist_last_checked
-    epoch = int(time.time())
-    epoch_time = str(epoch)
     news_titles = all_news()
     nist_beacon = nist()
+    epoch = int(time.time())
     next_news_update = str(pof_frequency-(epoch-news_last_checked))
     next_nist_update = pof_frequency-(epoch-nist_last_checked)
 
     if next_nist_update < 0:
-        next_nist_update = str(0)
+        next_nist_update = str("0 . . . (hopefully sometime soon)")
     else:
         next_nist_update = str(next_nist_update)
 
     return render_template(
         'layouts.html',
-        epoch_time=epoch_time,
+        epoch_time=str(time.time()),
         nyt_news_titles=news_titles[0],
         bbc_news_titles=news_titles[1],
         wsj_news_titles=news_titles[2],
         unix_time=nist_beacon[0],
         seed=nist_beacon[1],
         output=nist_beacon[2],
+        latest_hash = bitcoin_hash(),
         pof_frequency=pof_frequency,
         next_news_update=next_news_update,
         next_nist_update=next_nist_update
@@ -137,6 +137,10 @@ def nist():
     seed = root[3].text
     output = root[6].text
     return [unix_time, seed, output]
+
+@cache.cached(timeout=pof_frequency, key_prefix='bitcoin_hash')
+def bitcoin_hash():
+    return str(bitcoin_blockchain.text)
 
 def undo_list(input_list):
     undo_list = '<br>'.join(input_list)
