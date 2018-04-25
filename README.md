@@ -1,5 +1,5 @@
 ## Proof of Freshness
-This is just to demonstrate different ways to prove freshness when making documents or files.
+This is just to demonstrate different ways to prove freshness when making documents or files. This is great for cryptographic applications (take the hash of the webpage) and verifying that a document was not made before a certain date.
 
 ## Using in other applications
 If you need a proof of freshness or think it might be useful, just include all or some data from [homelabs.space:2052/pof](http://homelabs.space:2052/pof). Then, anyone will be able to verify the freshness of your document through the headlines from major reputable newspapers, latest bitcoin hash, and NIST's randomness beacon. You can copy and paste or use curl to grab the latest proofs of freshness.
